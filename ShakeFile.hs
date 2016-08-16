@@ -40,6 +40,7 @@ data Flags
     = Release
     | FoundationPath FilePath
     | OpenBrowser
+    | FoundationTag FilePath
   deriving (Show, Eq, Ord, Data, Typeable)
 
 configFlags :: [OptDescr (Either a Flags)]
@@ -47,12 +48,18 @@ configFlags =
   [ Option [] ["release"]    (NoArg $ Right Release) "generate the release version (only need to commit and push)"
   , Option [] ["foundation"] (ReqArg (Right . FoundationPath) "DIR")    "foundation library directory"
   , Option [] ["open"]       (NoArg $ Right OpenBrowser) "open the resulted output in your favorite browser"
+  , Option [] ["ref"]        (ReqArg (Right . FoundationTag) "REF") "checkout at a given repo"
   ]
 
 getFoundationDir :: [Flags] -> FilePath
 getFoundationDir [] = "_build/foundation"
 getFoundationDir (FoundationPath d:_) = d
 getFoundationDir (_:xs) = getFoundationDir xs
+
+getFoundationTag :: [Flags] -> String
+getFoundationTag [] = "master"
+getFoundationTag (FoundationTag ref:_) = ref
+getFoundationTag (_:xs) = getFoundationTag xs
 
 newtype FoundationVersion = FoundationVersion FilePath
   deriving (Show,Typeable,Eq,Hashable,Binary,NFData)
@@ -78,6 +85,7 @@ main = shakeArgsWith foundationMetaOptions configFlags $ \flags targets -> retur
   let foundationDir = getFoundationDir flags
   let resultDir = if release then "result" </> "release" else "result/devel"
   let openResultInBrowser = OpenBrowser `elem` flags
+  let tag = getFoundationTag flags
 
   fetchFoundation <- addOracle $ \(FoundationFetch fp) -> do
     foundationExist <- doesDirectoryExist fp
@@ -87,7 +95,7 @@ main = shakeArgsWith foundationMetaOptions configFlags $ \flags targets -> retur
     when release $ do
       putNormal "updating foundation directory"
       unit $ cmd (Cwd foundationDir) "git" "fetch"
-      unit $ cmd (Cwd foundationDir) "git" ["checkout", "origin/master", "-B", "release" </> "TODO"]
+      unit $ cmd (Cwd foundationDir) "git" ["checkout", tag, "-B", "release" </> tag]
   getCurrentDir <- addOracle $ \(CurrentDir ()) ->
      head . lines . fromStdout <$> cmd "pwd"
   getCommitAuthor <- addOracle $ \(FoundationAuthor fp) -> do
