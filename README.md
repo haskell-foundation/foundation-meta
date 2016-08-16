@@ -54,7 +54,7 @@ working on:
 
 ```bash
 # build the ShakeFile
-sh$ stack ghc -- ShakeFile.hs
+stack ghc -- ShakeFile.hs
 # run the benchs and open the result in the browser
 ./ShakeFile --foundation <path/to/source> --open benchs
 ```
