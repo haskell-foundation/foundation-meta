@@ -175,7 +175,6 @@ main = shakeArgsWith foundationMetaOptions configFlags $ \flags targets -> retur
   phony "benchs" $ do
     version <- getFoundationVersion $ FoundationVersion foundationDir
     benchSources <- getFoundationBenchs $ FoundationBenchs foundationDir
-    -- 1. we ac
     let workingDir = resultDir </> "foundation" </> version
     need [workingDir </> "info"]
     mapM_ (\b -> need [workingDir </> b -<.> "csv"]) benchSources
