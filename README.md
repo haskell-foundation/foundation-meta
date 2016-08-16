@@ -72,4 +72,4 @@ To only use for publishing. **WIP**
 * [ ] generation and publication of the benchmark:
   * [ ] being able to compare 2 different version of foundation;
   * [ ] publication on the Hakyll website.
-* [ ] in devel mode, give option to open the html result in browser.
+* [X] in devel mode, give option to open the html result in browser.
