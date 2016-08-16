@@ -29,6 +29,8 @@ import System.Console.GetOpt
 import Data.Data
 import Data.Typeable
 
+import Web.Browser (openBrowser)
+
 foundationMetaOptions :: ShakeOptions
 foundationMetaOptions = shakeOptions
   { shakeFiles = "shake_files"
@@ -37,12 +39,14 @@ foundationMetaOptions = shakeOptions
 data Flags
     = Release
     | FoundationPath FilePath
+    | OpenBrowser
   deriving (Show, Eq, Ord, Data, Typeable)
 
 configFlags :: [OptDescr (Either a Flags)]
 configFlags =
   [ Option [] ["release"]    (NoArg $ Right Release) "generate the release version (only need to commit and push)"
   , Option [] ["foundation"] (ReqArg (Right . FoundationPath) "DIR")    "foundation library directory"
+  , Option [] ["open"]       (NoArg $ Right OpenBrowser) "open the resulted output in your favorite browser"
   ]
 
 getFoundationDir :: [Flags] -> FilePath
@@ -73,6 +77,7 @@ main = shakeArgsWith foundationMetaOptions configFlags $ \flags targets -> retur
   let release = Release `elem` flags
   let foundationDir = getFoundationDir flags
   let resultDir = if release then "result" </> "release" else "result/devel"
+  let openResultInBrowser = OpenBrowser `elem` flags
 
   fetchFoundation <- addOracle $ \(FoundationFetch fp) -> do
     foundationExist <- doesDirectoryExist fp
@@ -174,6 +179,9 @@ main = shakeArgsWith foundationMetaOptions configFlags $ \flags targets -> retur
     let workingDir = resultDir </> "foundation" </> version
     need [workingDir </> "info"]
     mapM_ (\b -> need [workingDir </> b -<.> "csv"]) benchSources
+    when openResultInBrowser $ liftIO $ do
+      _ <- openBrowser workingDir
+      return ()
 
   phony "test" $ do
     fetchFoundation $ FoundationFetch foundationDir
