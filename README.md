@@ -3,7 +3,7 @@
 This repository is still **Work In Progress**. The aim being setup
 automatic generation of the Foundation's meta data. Because this is still
 a **WIP**, it is possible that statements made in this README.md are not
-yet implemented, see [TODO](#TODO) for more information.
+yet implemented, see [TODO](#todo) for more information.
 
 # Foundation META
 
