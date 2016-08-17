@@ -73,3 +73,24 @@ To only use for publishing. **WIP**
   * [ ] being able to compare 2 different version of foundation;
   * [ ] publication on the Hakyll website.
 * [X] in devel mode, give option to open the html result in browser.
+
+# WWW
+
+Currently just a quick placeholder site from # [Start Bootstrap](http://startbootstrap.com/) - [Agency](http://startbootstrap.com/template-overviews/agency/) theme, and the first image of "buildings" that came up in a google search. hakyll is used for building our pages.
+
+goals:
+
+* build some graphs capabilities from a directory full of CSVs
+* build some documentation capabilities
+* fill up placeholder with real information
+* add documentation, etc.
+
+development:
+
+```bash
+stack build
+stack exec site watch
+```
+
+then development pages are accessible on http://localhost:8000/
+
