@@ -1,13 +1,13 @@
 --------------------------------------------------------------------------------
 {-# LANGUAGE OverloadedStrings #-}
-import           Data.Monoid (mappend)
+import           Data.Monoid
 import           Hakyll
-
+import Debug.Trace
 
 --------------------------------------------------------------------------------
 main :: IO ()
 main = hakyll $ do
-    match "images/*" $ do
+    match "img/*" $ do
         route   idRoute
         compile copyFileCompiler
 
@@ -15,9 +15,18 @@ main = hakyll $ do
         route   idRoute
         compile compressCssCompiler
 
-    match (fromList ["about.rst", "contact.markdown"]) $ do
+    match "js/*" $ do
+        route   idRoute
+        compile copyFileCompiler
+
+    match "vendor/**" $ do
+        route   idRoute
+        compile copyFileCompiler
+
+    match (fromList ["features.md", "documentation.md"]) $ do
         route   $ setExtension "html"
         compile $ pandocCompiler
+            >>= loadAndApplyTemplate "templates/md.html" defaultContext
             >>= loadAndApplyTemplate "templates/default.html" defaultContext
             >>= relativizeUrls
 
@@ -27,6 +36,19 @@ main = hakyll $ do
             >>= loadAndApplyTemplate "templates/post.html"    postCtx
             >>= loadAndApplyTemplate "templates/default.html" postCtx
             >>= relativizeUrls
+
+    match "benchs/*.csv" $ compile $ getResourceBody
+
+    create ["bench.html"] $ do
+        route idRoute
+        compile $ do
+            items <- loadAll "benchs/*.csv"
+            itemTpl <- loadBody "templates/csv-to-js.html"
+            list <- applyTemplateList itemTpl benchCtx items
+            makeItem list
+                >>= loadAndApplyTemplate "templates/benchs.html" defaultContext
+                >>= loadAndApplyTemplate "templates/default.html" defaultContext
+                >>= relativizeUrls
 
     create ["archive.html"] $ do
         route idRoute
@@ -42,7 +64,6 @@ main = hakyll $ do
                 >>= loadAndApplyTemplate "templates/default.html" archiveCtx
                 >>= relativizeUrls
 
-
     match "index.html" $ do
         route idRoute
         compile $ do
@@ -54,6 +75,7 @@ main = hakyll $ do
 
             getResourceBody
                 >>= applyAsTemplate indexCtx
+                >>= loadAndApplyTemplate "templates/main.html" indexCtx
                 >>= loadAndApplyTemplate "templates/default.html" indexCtx
                 >>= relativizeUrls
 
@@ -63,5 +85,10 @@ main = hakyll $ do
 --------------------------------------------------------------------------------
 postCtx :: Context String
 postCtx =
+    dateField "date" "%B %e, %Y" `mappend`
+    defaultContext
+
+benchCtx :: Context String
+benchCtx =
     dateField "date" "%B %e, %Y" `mappend`
     defaultContext
