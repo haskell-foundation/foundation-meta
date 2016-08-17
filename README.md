@@ -92,5 +92,8 @@ stack build
 stack exec site watch
 ```
 
-then development pages are accessible on http://localhost:8000/
+then development pages are accessible on: http://localhost:8000/
+
+
+
 
