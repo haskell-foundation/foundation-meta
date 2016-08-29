@@ -24,14 +24,12 @@ you develop it.
 Requirements:
 
 * using [stack](https://haskellstack.org) (recommended);
-* install [Shake](http://shakebuild.com) (`stack install shake`);
-* install [open-browser](http://hackage.haskell.org/package/open-browser)
-  (`stack install open-browser`)
+* the `shake` and `open-browser` packages
 
 Compile the `ShakeFile`:
 
 ```bash
-stack ghc -- ShakeFile.hs
+stack ghc --package shake --package open-browser -- ShakeFile.hs
 ```
 
 ## Usage
