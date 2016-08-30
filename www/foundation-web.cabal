@@ -4,7 +4,11 @@ build-type:         Simple
 cabal-version:      >= 1.10
 
 executable site
-  main-is:          site.hs
+  main-is:          Main.hs
+  other-modules:    Generation
+                    CSV
+                    BenchUtils
+  hs-source-dirs:   src
   build-depends:    base == 4.*
                   , hakyll == 4.8.*
   ghc-options:      -threaded
