@@ -1,3 +1,8 @@
+ShakeFile
 www/.stack-work
 www/_cache
 www/_site
+_build/
+shake_files/
+*.hi
+*.o
