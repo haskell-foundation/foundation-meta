@@ -87,12 +87,6 @@ main = hakyll $ do
         route   idRoute
         compile copyFileCompiler
 
-    match (fromList ["features.md", "documentation.md"]) $ do
-        route   $ setExtension "html"
-        compile $ pandocCompiler
-            >>= loadAndApplyTemplate "templates/md.html" defaultContext
-            >>= applyPage (PageCtx Nothing "")
-            >>= relativizeUrls
 
 {-
     match "posts/*" $ do
@@ -134,25 +128,18 @@ main = hakyll $ do
 
             makeItem list
                 >>= loadAndApplyTemplate "templates/benchs.html" defaultContext
-                >>= applyPage (PageCtx (Just "Foundation: Benchmarks") footerScript)
+                >>= applyPage (PageCtx (Just "Foundation: Benchmarks") False footerScript)
                 >>= relativizeUrls
 
-{-
-    create ["archive.html"] $ do
+    create ["features.html"] $ do
         route idRoute
         compile $ do
-            posts <- recentFirst =<< loadAll "posts/*"
-            let archiveCtx =
-                    listField "posts" postCtx (return posts) `mappend`
-                    defaultContext
-
             makeItem ""
-                >>= loadAndApplyTemplate "templates/archive.html" archiveCtx
-                >>= applyPage (PageCtx (Just "Archives") "")
+                >>= loadAndApplyTemplate "templates/features.html" defaultContext
+                >>= applyPage (PageCtx (Just "Home") False "")
                 >>= relativizeUrls
-                -}
 
-    match "index.html" $ do
+    create ["index.html"] $ do
         route idRoute
         compile $ do
             posts <- recentFirst =<< loadAll "posts/*"
@@ -163,13 +150,14 @@ main = hakyll $ do
             getResourceBody
                 >>= applyAsTemplate indexCtx
                 >>= loadAndApplyTemplate "templates/main.html" indexCtx
-                >>= applyPage (PageCtx (Just "Home") "")
+                >>= applyPage (PageCtx (Just "Home") True "")
                 >>= relativizeUrls
 
     match "templates/*" $ compile templateBodyCompiler
 
 data PageCtx = PageCtx
     { pageTitle        :: Maybe String
+    , pageIsMain       :: Bool
     , pageFooterScript :: String
     }
 
@@ -178,6 +166,7 @@ applyPage c = loadAndApplyTemplate "templates/default.html" ctx
     ctx = mconcat
         [ constField "footerjs" (pageFooterScript c)
         , dateField "date" "%B %e, %Y"
+        , constField "navbarattrs" (if pageIsMain c then "bignav" else "affix")
         , optFields
         , defaultContext
         ]

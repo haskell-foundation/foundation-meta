@@ -24,10 +24,9 @@
     });
 
     // Offset for Main Navigation
-    $('#mainNav').affix({
-        offset: {
-            top: 100
-        }
-    })
+    var mainNav = $('#mainNav');
+    if (mainNav.attr("class").indexOf("bignav") !== -1) {
+      mainNav.affix({ offset: { top: 100 } });
+    }
 
 })(jQuery); // End of use strict
