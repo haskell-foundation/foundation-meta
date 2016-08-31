@@ -1,6 +1,8 @@
 module Generation
     ( JSVal(..)
     , renderVal
+    , htmlTag
+    , htmlTable
     ) where
 
 import           Data.Monoid
@@ -28,3 +30,24 @@ renderVal (JSString s) = show s
 renderVal (JSQStr s)   = "'" ++ s ++ "'"
 renderVal (JSArr l)    = "[" ++ intercalate ", " (map renderVal l) ++ "]"
 renderVal JSTrue       = "true"
+
+htmlTag :: String -> String -> String
+htmlTag x content  = open ++ content ++ close
+  where open  = "<" ++ x ++ ">"
+        close = "</" ++ x ++ ">"
+
+htmlTagAttr :: String -> [(String, String)] -> String -> String
+htmlTagAttr x attrs content  = open ++ content ++ close
+  where open  = "<" ++ x ++ attr ++ ">"
+        close = "</" ++ x ++ ">"
+        attr
+            | null attrs = ""
+            | otherwise  = " " ++ intercalate " " (map (\(k,v) -> k ++ "=\"" ++ v ++ "\"") attrs)
+
+htmlTable :: [String] -> [[String]] -> String
+htmlTable hdrs rows =
+    htmlTagAttr "table" [("class", "table table-bordered table-hover table-condensed")]
+        (  htmlTag "thead" (htmlTag "tr" (concatMap (htmlTag "th") hdrs))
+        ++ "\n"
+        ++ htmlTag "tbody" (mconcat $ map (htmlTag "tr" . concatMap (htmlTag "td")) rows)
+        )
