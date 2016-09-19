@@ -7,6 +7,7 @@ import           Text.Read
 import           Data.List (intercalate, intersperse)
 import           Generation
 import           BenchUtils
+import           Utils
 
 -- | Typical row out of criterion CSVs
 data Row = Row
@@ -59,8 +60,28 @@ parseCSV content =
                         Just d  -> d
         toRow l = error ("wrong format of row: " ++ show l)
 
-        wordsWhen :: (Char -> Bool) -> String -> [String]
-        wordsWhen p s = case dropWhile p s of
-            "" -> []
-            s' -> w : wordsWhen p s''
-                where (w, s'') = break p s'
+filterMap :: (String -> Maybe String)
+          -> CSV
+          -> CSV
+filterMap f csv =
+    CSV (csvHeader csv) (doFilter $ csvRows csv)
+  where
+    doFilter [] = []
+    doFilter (r:rs) =
+        case f (benchName r) of
+            Nothing      -> doFilter rs
+            Just newName -> r { benchName = newName } : doFilter rs
+
+printCSV :: CSV -> String
+printCSV content =
+    intercalate "\n"
+        ( toLine (csvHeader content)
+        : map (toLine . printRow) (csvRows content)
+        )
+  where
+    toLine = intercalate ","
+    printRow r =
+        [ benchName r
+        , show (mean r), show (meanLB r), show (meanUB r)
+        , show (stdDev r), show (stdDevLB r), show (stdDevUB r)
+        ]

@@ -8,8 +8,19 @@ executable site
   other-modules:    Generation
                     CSV
                     BenchUtils
+                    Utils
   hs-source-dirs:   src
   build-depends:    base == 4.*
                   , hakyll == 4.8.*
   ghc-options:      -threaded
+  default-language: Haskell2010
+
+executable bench-gen
+  main-is:          BenchGen.hs
+  hs-source-dirs:   src
+  other-modules:    BenchUtils
+                    CSV
+                    Generation
+                    Utils
+  build-depends:    base
   default-language: Haskell2010
