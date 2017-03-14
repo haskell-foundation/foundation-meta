@@ -5,14 +5,21 @@ module BenchUtils
     , rangeToFullHName
     , scale
     , autoScale
+    , printScale
+    , printAutoScale
     , BenchmarksName(..)
     , toBenchmarksName
     , BenchCat(..)
     , toBenchCat
+    , BenchResult(..)
+    , BenchGroup(..)
+    , groupBench
     ) where
 
 import Utils
-import Data.List (isSuffixOf)
+import Data.List (isSuffixOf, sort, nub, partition)
+import Data.Maybe (isJust)
+import Data.Bifunctor
 
 -- | the best range associated with a (Double) time value in seconds
 data Range = RSeconds | RMilliSeconds | RMicroSeconds | RNanoSeconds
@@ -29,7 +36,7 @@ getRange d
 rangeToHName :: Range -> String
 rangeToHName RSeconds      = "s"
 rangeToHName RMilliSeconds = "ms"
-rangeToHName RMicroSeconds = "us"
+rangeToHName RMicroSeconds = "μs"
 rangeToHName RNanoSeconds  = "ns"
 
 -- | Return the long name for the range
@@ -55,16 +62,19 @@ scale r d = fromIntegral (round (d * (10 ^ (n+prec))) :: Int) / (10^n)
 autoScale :: Double -> Double
 autoScale d = scale (getRange d) d
 
+printScale :: Range -> Double -> String
+printScale r d = show (scale r d) ++ " " ++ rangeToHName r
+
+printAutoScale :: Double -> String
+printAutoScale d = show (autoScale d) ++ " " ++ rangeToHName (getRange d)
+
 data BenchmarksName = BenchmarksName
     { benchmarksNameRaw         :: String
     , benchmarksNameGHCVersion  :: [Int]
     , benchmarksNameFndVersion  :: [Int]
     , benchmarksNameGitAfterTag :: Int
     , benchmarksNameGitHash     :: String
-    }
-
-instance Show BenchmarksName where
-    show bn = benchmarksNameRaw bn
+    } deriving (Show)
 
 -- | Take something a filename (with optional .csv suffix) and turn it into a versioned benchmark name
 --
@@ -73,10 +83,10 @@ instance Show BenchmarksName where
 --
 toBenchmarksName :: String -> Maybe BenchmarksName
 toBenchmarksName filename
-    | isSuffixOf ".csv" filename = toBenchmarksName $ take (length filename - 4) filename
-    | otherwise                  = toBenchmarksName filename
+    | isSuffixOf ".csv" filename = toStruct $ take (length filename - 4) filename
+    | otherwise                  = toStruct filename
   where
-    toBenchName s =
+    toStruct s =
         case wordsWhen (== '-') s of
             ghcVer:"foundation":('v':fndVer):gitCommits:hash:[] ->
                 Just $ BenchmarksName s (toVer ghcVer) (toVer fndVer) (toInt gitCommits) hash
@@ -91,7 +101,7 @@ data BenchCat = BenchCatType
     , benchCatTypeFct  :: String
     , benchCatTypeData :: String
     , benchCatTypeComp :: Maybe String
-    }
+    } deriving (Show,Eq)
 
 toBenchCat :: String -> Maybe BenchCat
 toBenchCat s =
@@ -99,3 +109,41 @@ toBenchCat s =
         "types":ty:fct:dat:comp:[] -> Just $ BenchCatType ty fct dat (Just comp)
         "types":ty:fct:dat:[]      -> Just $ BenchCatType ty fct dat Nothing
         _                          -> Nothing
+
+data BenchGroup = BenchGroup
+    { benchGroupName         :: [String]
+    , benchGroupResults      :: [(String, BenchResult)]
+    , benchGroupComparaisons :: [(String, [(String, BenchResult)])]
+    }
+    deriving (Show,Eq)
+
+groupBench :: [BenchResult] -> [BenchGroup]
+groupBench allbrs =
+    concatMap (\ty -> toHighGroup ty $ filter ((==) ty . benchCatType . fst) allBenchs) allTypes
+  where
+    toHighGroup ty brs =
+        let allFcts = nub $ sort $ map (benchCatTypeFct . fst) brs
+         in map (\fct -> toBenchGroup [ty,fct] $ filter ((==) fct . benchCatTypeFct . fst) brs) allFcts
+
+    allTypes = nub $ sort $ map benchCatType allBenchCat
+    allBenchCat = map (maybe (error "bench cat unreadable") id . toBenchCat . benchName) allbrs
+    allBenchs = zip allBenchCat allbrs
+
+    toBenchGroup groupName res =
+        BenchGroup groupName (map (first benchCatTypeData) normalBenches)
+                             (compGroups)
+      where
+        (compBenches, normalBenches) = partition (isJust . benchCatTypeComp . fst) res
+        allCompData = nub $ sort $ map (benchCatTypeData . fst) compBenches
+        compGroups = map (\c -> (c, map (first (maybe (error "xx") id . benchCatTypeComp)) $ filter ((==) c . benchCatTypeData . fst) compBenches)
+                         ) allCompData
+
+data BenchResult = BenchResult
+    { benchName :: String
+    , mean      :: Double
+    , meanLB    :: Double
+    , meanUB    :: Double
+    , stdDev    :: Double
+    , stdDevLB  :: Double
+    , stdDevUB  :: Double
+    } deriving (Show,Eq)

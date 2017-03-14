@@ -10,15 +10,7 @@ import           BenchUtils
 import           Utils
 
 -- | Typical row out of criterion CSVs
-data Row = Row
-    { benchName :: String
-    , mean      :: Double
-    , meanLB    :: Double
-    , meanUB    :: Double
-    , stdDev    :: Double
-    , stdDevLB  :: Double
-    , stdDevUB  :: Double
-    }
+type Row = BenchResult
 
 data CSV = CSV
     { csvHeader :: [String]
@@ -35,7 +27,7 @@ csvToHtml csv = intercalate "\n" $
     ]
   where
     rows = map toRow $ csvRows csv
-    toRow (Row bn m1 m2 m3 s1 s2 s3) =
+    toRow (BenchResult bn m1 m2 m3 s1 s2 s3) =
         mconcat ["<tr>"
                 , "<td>", bn, "</td>"
                 , "<td>", prettyTime m1, "</td>"
@@ -53,7 +45,7 @@ parseCSV content =
         hdr:rows -> CSV hdr (map toRow rows)
   where
         toRow (n:m:ml:mu:s:sl:su:[]) =
-            Row n (rDouble m) (rDouble ml) (rDouble mu) (rDouble s) (rDouble sl) (rDouble su)
+            BenchResult n (rDouble m) (rDouble ml) (rDouble mu) (rDouble s) (rDouble sl) (rDouble su)
           where rDouble s =
                     case readMaybe s of
                         Nothing -> error ("couldn't read double : " ++ show s)
